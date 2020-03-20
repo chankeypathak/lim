@@ -90,45 +90,64 @@ def series(symbols):
     return res
 
 
-def build_curve_query(symbols, curve_date=None):
-    lets, shows, whens = '', '', ''
-    curve_counter = 0
-
-    for symbol in symbols:
-        curve_counter += 1
-        column = 'Close'
-        if curve_date is None:
-            curve_date_str = "LAST"
-        else:
-            curve_date_str = curve_date.strftime("%m/%d/%Y")
-
-        inc_or = ''
-        if len(symbols) > 1 and curve_counter != len(symbols):
-            inc_or = 'OR'
-
-        lets += 'ATTR x{0} = forward_curve({1},"{2}","{3}","","","days","",0 day ago)\n'.format(curve_counter, symbol, column, curve_date_str)
-        shows += '{1}: x{0}\n'.format(curve_counter, symbol)
-        whens += 'x{0} is DEFINED {1}\n'.format(curve_counter, inc_or)
-
+def build_curve_helper(lets, shows, whens):
     query = '''
-        LET
-        {0}
-        SHOW
-        {1}
-        WHEN
-        {2}
-    '''.format(lets, shows, whens)
+            LET
+            {0}
+            SHOW
+            {1}
+            WHEN
+            {2}
+        '''.format(lets, shows, whens)
     return query
 
 
-def curve(symbols, curve_date=None):
+def build_curve_history_query(symbols, column='Close', curve_dates=None):
+    lets, shows, whens = '', '', ''
+    counter = 0
+    for curve_date in curve_dates:
+        counter += 1
+        curve_date_str, curve_date_str_nor = curve_date.strftime("%m/%d/%Y"), curve_date.strftime("%d/%m/%Y")
+
+        inc_or = ''
+        if len(curve_dates) > 1 and counter != len(curve_dates):
+            inc_or = 'OR'
+        lets += 'ATTR x{0} = forward_curve({1},"{2}","{3}","","","days","",0 day ago)\n'.format(counter, symbols[0], column, curve_date_str)
+        shows += '{0}: x{1}\n'.format(curve_date_str_nor, counter)
+        whens += 'x{0} is DEFINED {1}\n'.format(counter, inc_or)
+    return build_curve_helper(lets, shows, whens)
+
+
+def build_curve_query(symbols, column='Close', curve_date=None):
+    lets, shows, whens = '', '', ''
+    counter = 0
+
+    for symbol in symbols:
+        counter += 1
+        curve_date_str = "LAST" if curve_date is None else curve_date.strftime("%m/%d/%Y")
+
+        inc_or = ''
+        if len(symbols) > 1 and counter != len(symbols):
+            inc_or = 'OR'
+
+        lets += 'ATTR x{0} = forward_curve({1},"{2}","{3}","","","days","",0 day ago)\n'.format(counter, symbol, column, curve_date_str)
+        shows += '{0}: x{1}\n'.format(symbol, counter)
+        whens += 'x{0} is DEFINED {1}\n'.format(counter, inc_or)
+
+    return build_curve_helper(lets, shows, whens)
+
+
+def curve(symbols, column='Close', curve_dates=None):
     scall = symbols
     if isinstance(scall, str):
         scall = [scall]
     if isinstance(scall, dict):
         scall = list(scall.keys())
 
-    q = build_curve_query(scall, curve_date)
+    if curve_dates is not None and isinstance(curve_dates, list) and len(curve_dates) > 1:
+        q = build_curve_history_query(scall, column, curve_dates)
+    else:
+        q = build_curve_query(scall, column, curve_dates)
     res = call_lim_api_query(q)
 
     if isinstance(symbols, dict):

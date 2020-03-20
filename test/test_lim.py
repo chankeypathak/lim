@@ -40,6 +40,14 @@ class TestMP(unittest.TestCase):
         self.assertIn('GO', res.columns)
         self.assertIn('Brent', res.columns)
 
+        res = lim.curve('FB', curve_dates=pd.to_datetime('2020-03-17'))
+        self.assertIn('FB', res.columns)
+
+    def test_curve_history(self):
+        res = lim.curve('FP', curve_dates=[pd.to_datetime('2020-03-17'), pd.to_datetime('2020-03-18')])
+        self.assertIn('17/03/2020', res.columns)
+        self.assertIn('18/03/2020', res.columns)
+
 
 if __name__ == '__main__':
     unittest.main()
