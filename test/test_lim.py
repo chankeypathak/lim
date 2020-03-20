@@ -48,6 +48,15 @@ class TestMP(unittest.TestCase):
         self.assertIn('17/03/2020', res.columns)
         self.assertIn('18/03/2020', res.columns)
 
+    def test_symbol_contracts(self):
+        res = lim.get_symbol_contract_list('FB', monthly_contracts_only=True)
+        self.assertIn('FB_1998J', res)
+        self.assertIn('FB_2020Z', res)
+
+    def test_futures_contracts(self):
+        res = lim.futures_contracts('FB')
+        self.assertIn('FB_2020Z', res.columns)
+
 
 if __name__ == '__main__':
     unittest.main()

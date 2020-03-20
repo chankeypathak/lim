@@ -1,5 +1,6 @@
 import pandas as pd
 import os
+import re
 import time
 from lxml import etree
 import requests
@@ -11,6 +12,7 @@ limUserName = os.environ['LIMUSERNAME'].replace('"', '')
 limPassword = os.environ['LIMPASSWORD'].replace('"', '')
 
 lim_datarequests_url = '{}/rs/api/datarequests'.format(limServer)
+lim_schema_futurues_url = '{}/rs/api/schema/relations/<SYMBOL>?showChildren=true&desc=true&showColumns=false&dateRange=true'.format(limServer)
 
 calltries = 50
 sleep = 2.5
@@ -63,7 +65,7 @@ def call_lim_api_query(q, id=None, tries=calltries):
         else:
             raise Exception(root.attrib['statusMsg'])
     else:
-        logging.error('Received response: Code: {} Msg: {}'.format(resp, resp.text))
+        logging.error('Received response: Code: {} Msg: {}'.format(resp.status_code, resp.text))
         raise Exception(resp.text)
 
 
@@ -158,3 +160,30 @@ def curve(symbols, column='Close', curve_dates=None):
     # reindex dates to start of month
     res = res.resample('MS').mean()
     return res
+
+
+def futures_contracts(symbol, start_year=2020):
+    contracts = get_symbol_contract_list(symbol, monthly_contracts_only=True)
+    contracts = [x for x in contracts if int(x.split('_')[-1][:4]) >= start_year]
+    df = series(contracts)
+    return df
+
+
+def get_symbol_contract_list(symbol, monthly_contracts_only=False):
+    """
+    Given a symbol pull all futurues contracts related to it
+    :param symbol:
+    :return:
+    """
+    uri = lim_schema_futurues_url.replace('<SYMBOL>', symbol)
+    resp = requests.get(uri, headers=headers, auth=(limUserName, limPassword))
+
+    if resp.status_code == 200:
+        root = etree.fromstring(resp.text.encode('utf-8'))
+        contracts = [x.attrib['name'] for x in root[0][0]]
+        if monthly_contracts_only:
+            contracts = [x for x in contracts if re.findall('\d\d\d\d\w', x) ]
+        return contracts
+    else:
+        logging.error('Received response: Code: {} Msg: {}'.format(resp.status_code, resp.text))
+        raise Exception(resp.text)
