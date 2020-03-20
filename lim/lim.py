@@ -155,4 +155,6 @@ def curve(symbols, column='Close', curve_dates=None):
 
     # only keep the current forward curve, discard history
     res = res['{}-{}'.format(pd.datetime.now().year, pd.datetime.now().month):]
+    # reindex dates to start of month
+    res = res.resample('MS').mean()
     return res
