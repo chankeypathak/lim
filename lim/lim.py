@@ -10,14 +10,14 @@ limServer = os.environ['LIMSERVER'].replace('"', '')
 limUserName = os.environ['LIMUSERNAME'].replace('"', '')
 limPassword = os.environ['LIMPASSWORD'].replace('"', '')
 
+lim_datarequests_url = '{}/rs/api/datarequests'.format(limServer)
+
 calltries = 50
 sleep = 2.5
 
 headers = {
     'Content-Type': 'application/xml',
 }
-
-lim_datarequests_url = '{}/rs/api/datarequests'.format(limServer)
 
 
 def alternate_col_val(values, noCols):
@@ -107,7 +107,7 @@ def build_curve_history_query(symbols, column='Close', curve_dates=None):
     counter = 0
     for curve_date in curve_dates:
         counter += 1
-        curve_date_str, curve_date_str_nor = curve_date.strftime("%m/%d/%Y"), curve_date.strftime("%d/%m/%Y")
+        curve_date_str, curve_date_str_nor = curve_date.strftime("%m/%d/%Y"), curve_date.strftime("%Y/%m/%d")
 
         inc_or = ''
         if len(curve_dates) > 1 and counter != len(curve_dates):
