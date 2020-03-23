@@ -17,6 +17,9 @@ lim_schema_futurues_url = '{}/rs/api/schema/relations/<SYMBOL>?showChildren=true
 calltries = 50
 sleep = 2.5
 
+curyear = pd.datetime.now().year
+
+
 headers = {
     'Content-Type': 'application/xml',
 }
@@ -162,9 +165,9 @@ def curve(symbols, column='Close', curve_dates=None):
     return res
 
 
-def futures_contracts(symbol, start_year=2020):
+def futures_contracts(symbol, start_year=curyear, end_year=curyear+2):
     contracts = get_symbol_contract_list(symbol, monthly_contracts_only=True)
-    contracts = [x for x in contracts if int(x.split('_')[-1][:4]) >= start_year]
+    contracts = [x for x in contracts if start_year <= int(x.split('_')[-1][:4]) <= end_year]
     df = series(contracts)
     return df
 
