@@ -40,7 +40,7 @@ def build_dataframe(reports):
     return df
 
 
-def call_lim_api_query(q, id=None, tries=calltries):
+def query(q, id=None, tries=calltries):
     r = '<DataRequest><Query><Text>{}</Text></Query></DataRequest>'.format(q)
 
     if tries == 0:
@@ -64,7 +64,7 @@ def call_lim_api_query(q, id=None, tries=calltries):
             logging.debug('Not complete')
             reqId = int(root.attrib['id'])
             time.sleep(sleep)
-            return call_lim_api_query(q, reqId, tries - 1)
+            return query(q, reqId, tries - 1)
         else:
             raise Exception(root.attrib['statusMsg'])
     else:
@@ -87,7 +87,7 @@ def series(symbols):
         scall = list(scall.keys())
 
     q = build_series_query(scall)
-    res = call_lim_api_query(q)
+    res = query(q)
 
     if isinstance(symbols, dict):
         res = res.rename(columns=symbols)
@@ -95,7 +95,7 @@ def series(symbols):
     return res
 
 
-def build_curve_helper(lets, shows, whens):
+def build_let_show_when_helper(lets, shows, whens):
     query = '''
             LET
             {0}
@@ -120,7 +120,7 @@ def build_curve_history_query(symbols, column='Close', curve_dates=None):
         lets += 'ATTR x{0} = forward_curve({1},"{2}","{3}","","","days","",0 day ago)\n'.format(counter, symbols[0], column, curve_date_str)
         shows += '{0}: x{1}\n'.format(curve_date_str_nor, counter)
         whens += 'x{0} is DEFINED {1}\n'.format(counter, inc_or)
-    return build_curve_helper(lets, shows, whens)
+    return build_let_show_when_helper(lets, shows, whens)
 
 
 def build_curve_query(symbols, column='Close', curve_date=None):
@@ -139,7 +139,7 @@ def build_curve_query(symbols, column='Close', curve_date=None):
         shows += '{0}: x{1}\n'.format(symbol, counter)
         whens += 'x{0} is DEFINED {1}\n'.format(counter, inc_or)
 
-    return build_curve_helper(lets, shows, whens)
+    return build_let_show_when_helper(lets, shows, whens)
 
 
 def curve(symbols, column='Close', curve_dates=None):
@@ -153,7 +153,7 @@ def curve(symbols, column='Close', curve_dates=None):
         q = build_curve_history_query(scall, column, curve_dates)
     else:
         q = build_curve_query(scall, column, curve_dates)
-    res = call_lim_api_query(q)
+    res = query(q)
 
     if isinstance(symbols, dict):
         res = res.rename(columns=symbols)
@@ -165,6 +165,7 @@ def curve(symbols, column='Close', curve_dates=None):
     return res
 
 
+@lru_cache(maxsize=None)
 def futures_contracts(symbol, start_year=curyear, end_year=curyear+2):
     contracts = get_symbol_contract_list(symbol, monthly_contracts_only=True)
     contracts = [x for x in contracts if start_year <= int(x.split('_')[-1][:4]) <= end_year]
@@ -172,6 +173,7 @@ def futures_contracts(symbol, start_year=curyear, end_year=curyear+2):
     return df
 
 
+@lru_cache(maxsize=None)
 def get_symbol_contract_list(symbol, monthly_contracts_only=False):
     """
     Given a symbol pull all futurues contracts related to it
