@@ -7,7 +7,7 @@ class TestMP(unittest.TestCase):
 
     def test_lim_query(self):
         q = 'Show \r\nFB: FB FP: FP when date is after 2019'
-        res = lim.call_lim_api_query(q)
+        res = lim.query(q)
         self.assertIsNotNone(res)
         self.assertIn('FB', res.columns)
         self.assertIn('FP', res.columns)
@@ -22,7 +22,7 @@ class TestMP(unittest.TestCase):
         FP: FP
         FP_02: FP_M2
         '''
-        res = lim.call_lim_api_query(q)
+        res = lim.query(q)
         self.assertIsNotNone(res)
         self.assertIn('FP', res.columns)
         self.assertIn('FP_02', res.columns)
@@ -45,8 +45,8 @@ class TestMP(unittest.TestCase):
 
     def test_curve_history(self):
         res = lim.curve('FP', curve_dates=[pd.to_datetime('2020-03-17'), pd.to_datetime('2020-03-18')])
-        self.assertIn('17/03/2020', res.columns)
-        self.assertIn('18/03/2020', res.columns)
+        self.assertIn('2020/03/17', res.columns)
+        self.assertIn('2020/03/18', res.columns)
 
     def test_symbol_contracts(self):
         res = lim.get_symbol_contract_list('FB', monthly_contracts_only=True)
@@ -56,6 +56,13 @@ class TestMP(unittest.TestCase):
     def test_futures_contracts(self):
         res = lim.futures_contracts('FB')
         self.assertIn('FB_2020Z', res.columns)
+
+    def test_cont_futures_rollover(self):
+        res = lim.continuous_futures_rollover('FB', months=['M1', 'M2'], after_date=2019)
+        print(res.head())
+        self.assertEqual(res['FB_M1'][pd.to_datetime('2020-01-02')], 66.25)
+        self.assertEqual(res['FB_M2'][pd.to_datetime('2020-01-02')], 65.56)
+
 
 
 if __name__ == '__main__':

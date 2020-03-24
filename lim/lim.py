@@ -18,7 +18,7 @@ calltries = 50
 sleep = 2.5
 
 curyear = pd.datetime.now().year
-
+prevyear = curyear - 1
 
 headers = {
     'Content-Type': 'application/xml',
@@ -162,6 +162,26 @@ def curve(symbols, column='Close', curve_dates=None):
     res = res['{}-{}'.format(pd.datetime.now().year, pd.datetime.now().month):]
     # reindex dates to start of month
     res = res.resample('MS').mean()
+    return res
+
+
+def build_continuous_futures_rollover_query(symbol, months=['M1'], rollover_date='5 days before expiration day', after_date=prevyear):
+    lets, shows, whens = '', '', 'Date is after {}\n'.format(after_date)
+    for month in months:
+        m = int(month[-1])
+        if m == 1:
+            rollover_policy = 'actual prices'
+        else:
+            rollover_policy = '{} nearby actual prices'.format(m)
+        lets += '{0}_M{1} = {0}(ROLLOVER_DATE = "{2}",ROLLOVER_POLICY = "{3}")\n '.format(symbol, m, rollover_date, rollover_policy)
+        shows += '{0}_M{1}: {0}_M{1} \n '.format(symbol, m)
+
+    return build_let_show_when_helper(lets, shows, whens)
+
+
+def continuous_futures_rollover(symbol, months=['M1'], rollover_date='5 days before expiration day', after_date=prevyear):
+    q = build_continuous_futures_rollover_query(symbol, months=months, rollover_date=rollover_date, after_date=after_date)
+    res = query(q)
     return res
 
 
