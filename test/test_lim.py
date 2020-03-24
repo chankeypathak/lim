@@ -58,10 +58,10 @@ class TestMP(unittest.TestCase):
         self.assertIn('FB_2020Z', res.columns)
 
     def test_cont_futures_rollover(self):
-        res = lim.continuous_futures_rollover('FB', months=['M1', 'M2'], after_date=2019)
+        res = lim.continuous_futures_rollover('FB', months=['M1', 'M12'], after_date=2019)
         print(res.head())
         self.assertEqual(res['FB_M1'][pd.to_datetime('2020-01-02')], 66.25)
-        self.assertEqual(res['FB_M2'][pd.to_datetime('2020-01-02')], 65.56)
+        self.assertEqual(res['FB_M12'][pd.to_datetime('2020-01-02')], 60.94)
 
 
 

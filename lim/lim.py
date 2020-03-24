@@ -168,7 +168,7 @@ def curve(symbols, column='Close', curve_dates=None):
 def build_continuous_futures_rollover_query(symbol, months=['M1'], rollover_date='5 days before expiration day', after_date=prevyear):
     lets, shows, whens = '', '', 'Date is after {}\n'.format(after_date)
     for month in months:
-        m = int(month[-1])
+        m = int(month[1:])
         if m == 1:
             rollover_policy = 'actual prices'
         else:
