@@ -173,8 +173,8 @@ def build_continuous_futures_rollover_query(symbol, months=['M1'], rollover_date
             rollover_policy = 'actual prices'
         else:
             rollover_policy = '{} nearby actual prices'.format(m)
-        lets += '{0}_M{1} = {0}(ROLLOVER_DATE = "{2}",ROLLOVER_POLICY = "{3}")\n '.format(symbol, m, rollover_date, rollover_policy)
-        shows += '{0}_M{1}: {0}_M{1} \n '.format(symbol, m)
+        lets += 'M{1} = {0}(ROLLOVER_DATE = "{2}",ROLLOVER_POLICY = "{3}")\n '.format(symbol, m, rollover_date, rollover_policy)
+        shows += 'M{0}: M{0} \n '.format(m)
 
     return build_let_show_when_helper(lets, shows, whens)
 
