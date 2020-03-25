@@ -24,6 +24,11 @@ headers = {
     'Content-Type': 'application/xml',
 }
 
+proxies = {
+    'http': os.getenv('http_proxy'),
+    'https': os.getenv('https_proxy')
+}
+
 
 def alternate_col_val(values, noCols):
     for x in range(0, len(values), noCols):
@@ -47,10 +52,10 @@ def query(q, id=None, tries=calltries):
         raise Exception('Run out of tries')
 
     if id is None:
-        resp = requests.request("POST", lim_datarequests_url, headers=headers, data=r, auth=(limUserName, limPassword))
+        resp = requests.request("POST", lim_datarequests_url, headers=headers, data=r, auth=(limUserName, limPassword), proxies=proxies)
     else:
         uri = '{}/{}'.format(lim_datarequests_url, id)
-        resp = requests.get(uri, headers=headers, auth=(limUserName, limPassword))
+        resp = requests.get(uri, headers=headers, auth=(limUserName, limPassword), proxies=proxies)
     status = resp.status_code
     if status == 200:
         root = etree.fromstring(resp.text.encode('utf-8'))
@@ -201,7 +206,7 @@ def get_symbol_contract_list(symbol, monthly_contracts_only=False):
     :return:
     """
     uri = lim_schema_futurues_url.replace('<SYMBOL>', symbol)
-    resp = requests.get(uri, headers=headers, auth=(limUserName, limPassword))
+    resp = requests.get(uri, headers=headers, auth=(limUserName, limPassword), proxies=proxies)
 
     if resp.status_code == 200:
         root = etree.fromstring(resp.text.encode('utf-8'))
