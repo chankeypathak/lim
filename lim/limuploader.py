@@ -67,6 +67,8 @@ def build_upload_xml(df, dfmeta):
             treepath = tokens[0]
             column = default_column if len(tokens) == 1 else tokens[1]
             desc = dfmeta.get('description', '')
+            if isinstance(irow, pd.Timestamp):
+                irow = irow.date()
             erow = xROW(
                 xCOLS(
                     xCOL(treepath, num="1"),
