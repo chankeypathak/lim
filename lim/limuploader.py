@@ -19,6 +19,8 @@ headers = {
     'Content-Type': 'text/xml',
 }
 
+default_column = 'TopColumn:Price:Close'
+
 
 def check_upload_status(jobid):
     url = '{}{}'.format(lim_upload_status_url, jobid)
@@ -55,13 +57,17 @@ def build_upload_xml(df, dfmeta):
     entries = []
     count = 1
     for x, y in df.iterrows():
+        tokens = y.index[0].split(';')
+        treepath = tokens[0]
+        column = default_column if len(tokens) == 1 else tokens[1]
+        desc = dfmeta.get('description', '')
         erow = xROW(
             xCOLS(
-                xCOL(dfmeta['treepath'], num="1"),
-                xCOL(dfmeta['column'], num="2"),
+                xCOL(treepath, num="1"),
+                xCOL(column, num="2"),
                 xCOL(str((x - datetime(1899, 12, 30).date()).days), num="3"), # excel dateformat
                 xCOL(str(y[0]), num="4"),
-                xCOL(dfmeta['description'], num="5"),
+                xCOL(desc, num="5"),
             ),
             num=str(count)
         )

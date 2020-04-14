@@ -11,11 +11,9 @@ class TestLimUploader(unittest.TestCase):
     def test_upload_series(self):
         r = random()
         dn = datetime.now().date()
-        df = pd.DataFrame([r], index=[dn], columns=['SPOTPRICE'])
+        df = pd.DataFrame([r], index=[dn], columns=['TopRelation:Test:SPOTPRICE;TopColumn:Price:Close'])
 
         dfmeta = {
-            'treepath': 'TopRelation:Test:SPOTPRICE',
-            'column': 'TopColumn:Price:Close',
             'description': 'desc'
         }
 
