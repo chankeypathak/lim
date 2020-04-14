@@ -1,14 +1,11 @@
-import pandas as pd
-import os
 from datetime import datetime
-import time
 from lxml import etree
-import requests
-from functools import lru_cache
-import logging
-from lim import lim
-import lxml.etree
 import lxml.builder
+import time
+import requests
+import logging
+import pandas as pd
+from lim import lim
 
 
 lim_upload_default_parser_url = '{}/rs/upload?username={}'.format(lim.limServer, lim.limUserName)
@@ -64,6 +61,8 @@ def build_upload_xml(df, dfmeta):
     count = 1
     for irow, row in df.iterrows():
         for col, val in row.iteritems():
+            if pd.isna(val):
+                continue
             tokens = col.split(';')
             treepath = tokens[0]
             column = default_column if len(tokens) == 1 else tokens[1]
@@ -93,6 +92,7 @@ def build_upload_xml(df, dfmeta):
 def upload_series(df, dfmeta):
     url = '{}&parsername=DefaultParser'.format(lim_upload_default_parser_url)
     res = build_upload_xml(df, dfmeta)
+    logging.info('Uploading df below to {}:\n'.format(url, df))
     resp = requests.request("POST", url, headers=headers, data=res, auth=(lim.limUserName, lim.limPassword), proxies=lim.proxies)
 
     status = resp.status_code
