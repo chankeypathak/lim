@@ -3,7 +3,7 @@ from lim import lim
 import unittest
 
 
-class TestMP(unittest.TestCase):
+class TestLim(unittest.TestCase):
 
     def test_lim_query(self):
         q = 'Show \r\nFB: FB FP: FP when date is after 2019'
