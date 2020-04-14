@@ -47,6 +47,12 @@ def check_upload_status(jobid):
 
 
 def build_upload_xml(df, dfmeta):
+    """
+    Converts a dataframe (column headings being the treepath) into an XML that the uploader takes
+    :param df:
+    :param dfmeta:
+    :return:
+    """
     E = lxml.builder.ElementMaker()
     ROOT = E.ExcelData
     ROWS = E.Rows
@@ -56,30 +62,31 @@ def build_upload_xml(df, dfmeta):
 
     entries = []
     count = 1
-    for x, y in df.iterrows():
-        tokens = y.index[0].split(';')
-        treepath = tokens[0]
-        column = default_column if len(tokens) == 1 else tokens[1]
-        desc = dfmeta.get('description', '')
-        erow = xROW(
-            xCOLS(
-                xCOL(treepath, num="1"),
-                xCOL(column, num="2"),
-                xCOL(str((x - datetime(1899, 12, 30).date()).days), num="3"), # excel dateformat
-                xCOL(str(y[0]), num="4"),
-                xCOL(desc, num="5"),
-            ),
-            num=str(count)
-        )
-        count = count + 1
-        entries.append(erow)
+    for irow, row in df.iterrows():
+        for col, val in row.iteritems():
+            tokens = col.split(';')
+            treepath = tokens[0]
+            column = default_column if len(tokens) == 1 else tokens[1]
+            desc = dfmeta.get('description', '')
+            erow = xROW(
+                xCOLS(
+                    xCOL(treepath, num="1"),
+                    xCOL(column, num="2"),
+                    xCOL(str((irow - datetime(1899, 12, 30).date()).days), num="3"), # excel dateformat
+                    xCOL(str(val), num="4"),
+                    xCOL(desc, num="5"),
+                ),
+                num=str(count)
+            )
+            count = count + 1
+            entries.append(erow)
 
-    x = ROOT()
+    irow = ROOT()
     xROWS = ROWS()
     [xROWS.append(x) for x in entries]
-    x.append(xROWS)
+    irow.append(xROWS)
 
-    res = (lxml.etree.tostring(x, pretty_print=True))
+    res = (lxml.etree.tostring(irow, pretty_print=True))
     return res
 
 
