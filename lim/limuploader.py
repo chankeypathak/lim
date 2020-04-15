@@ -112,7 +112,7 @@ def upload_chunk(df, dfmeta):
             jobid = root.attrib['jobID']
             for i in range(0, lim.calltries):
                 code, msg = check_upload_status(jobid)
-                if code in ['300', '302']:
+                if code in ['200', '201', '300', '302']:
                     return msg
                 else:
                     logging.warning('Problem with upload job {}: {}'.format(jobid, msg))
@@ -121,10 +121,19 @@ def upload_chunk(df, dfmeta):
 
     else:
         logging.error('Received response: Code: {} Msg: {}'.format(resp.status_code, resp.text))
+        logging.error('For chunk head: \n{}'.format(df.head()))
+        logging.error('For chunk tail: \n{}'.format(df.tail()))
+
         raise Exception(resp.text)
 
 
 def upload_series(df, dfmeta):
-    for chunk in chunks(df, 100):
+    # try to do 1000 values at a time
+    total_count = len(df) * len(df.columns)
+    chunksize = int(round(total_count / len(df.columns) / 1000, 0))
+    if chunksize == 0:
+        chunksize = 1
+
+    for chunk in chunks(df, chunksize):
         upload_chunk(chunk, dfmeta)
 
