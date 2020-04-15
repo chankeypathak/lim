@@ -115,7 +115,7 @@ def upload_chunk(df, dfmeta):
                 if code in ['200', '201', '300', '302']:
                     return msg
                 else:
-                    logging.warning('Problem with upload job {}: {}'.format(jobid, msg))
+                    logging.warning('Problem with upload job {} code{}: msg:{}'.format(jobid, code, msg))
 
                 time.sleep(lim.sleep)
 
@@ -134,6 +134,8 @@ def upload_series(df, dfmeta):
     if chunksize == 0:
         chunksize = 1
 
+    msg = ''
     for chunk in chunks(df, chunksize):
-        upload_chunk(chunk, dfmeta)
+        msg = upload_chunk(chunk, dfmeta)
 
+    return msg
