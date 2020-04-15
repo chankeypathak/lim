@@ -91,11 +91,18 @@ def build_upload_xml(df, dfmeta):
     return res
 
 
-def upload_series(df, dfmeta):
+def chunks(lst, n):
+    """Yield successive n-sized chunks from lst."""
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]
+
+
+def upload_chunk(df, dfmeta):
     url = '{}&parsername=DefaultParser'.format(lim_upload_default_parser_url)
     res = build_upload_xml(df, dfmeta)
     logging.info('Uploading df below to {}:\n'.format(url, df))
-    resp = requests.request("POST", url, headers=headers, data=res, auth=(lim.limUserName, lim.limPassword), proxies=lim.proxies)
+    resp = requests.request("POST", url, headers=headers, data=res, auth=(lim.limUserName, lim.limPassword),
+                            proxies=lim.proxies)
 
     status = resp.status_code
     if status == 200:
@@ -115,4 +122,9 @@ def upload_series(df, dfmeta):
     else:
         logging.error('Received response: Code: {} Msg: {}'.format(resp.status_code, resp.text))
         raise Exception(resp.text)
+
+
+def upload_series(df, dfmeta):
+    for chunk in chunks(df, 100):
+        upload_chunk(chunk, dfmeta)
 
