@@ -35,8 +35,8 @@ def check_upload_status(jobid):
             message_el = status_el.find('message')
             if message_el is not None:
                 msg = message_el.text
-            if code != '300':
-                logging.warning('Problem with upload job {}: {}'.format(jobid, msg))
+            if code not in ['200', '201', '300', '302']:
+                logging.warning('jobid {}: code:{} msg:'.format(jobid, code, msg))
             return code, msg
     else:
         logging.error('Received response: Code: {} Msg: {}'.format(resp.status_code, resp.text))
@@ -110,12 +110,11 @@ def upload_chunk(df, dfmeta):
         intStatus = root.attrib['intStatus']
         if intStatus == '202':
             jobid = root.attrib['jobID']
+            logging.debug('Submitted jobid:{}'.format(jobid))
             for i in range(0, lim.calltries):
                 code, msg = check_upload_status(jobid)
                 if code in ['200', '201', '300', '302']:
                     return msg
-                else:
-                    logging.warning('Problem with upload job {} code{}: msg:{}'.format(jobid, code, msg))
 
                 time.sleep(lim.sleep)
 
@@ -129,10 +128,15 @@ def upload_chunk(df, dfmeta):
 
 def upload_series(df, dfmeta):
     # try to do 1000 values at a time
-    total_count = len(df) * len(df.columns)
-    chunksize = int(round(total_count / len(df.columns) / 1000, 0))
-    if chunksize == 0:
-        chunksize = 1
+    if len(df.columns) == 1:
+        chunksize = int(len(df) / 1000)
+        if chunksize == 0:
+            chunksize = 100
+    else:
+        total_count = len(df) * len(df.columns)
+        chunksize = int(round(total_count / len(df.columns) / 1000, 0))
+        if chunksize == 0:
+            chunksize = 1
 
     msg = ''
     for chunk in chunks(df, chunksize):
