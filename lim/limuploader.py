@@ -130,7 +130,7 @@ def upload_series(df, dfmeta):
     # try to do 1000 values at a time
     if len(df.columns) == 1:
         chunksize = int(len(df) / 1000)
-        if chunksize == 0:
+        if chunksize < 100:
             chunksize = 100
     else:
         total_count = len(df) * len(df.columns)
