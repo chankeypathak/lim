@@ -6,6 +6,8 @@ from lxml import etree
 import requests
 from functools import lru_cache
 import logging
+import hashlib
+
 
 limServer = os.environ['LIMSERVER'].replace('"', '')
 limUserName = os.environ['LIMUSERNAME'].replace('"', '')
@@ -35,6 +37,12 @@ def alternate_col_val(values, noCols):
         yield values[x:x + noCols]
 
 
+def query_hash(query):
+    r = hashlib.md5(query.encode()).hexdigest()
+    rf = '{}.h5'.format(r)
+    return rf
+
+
 def build_dataframe(reports):
     columns = [x.text for x in reports.iter(tag='ColumnHeadings')]
     dates = [x.text for x in reports.iter(tag='RowDates')]
@@ -45,7 +53,33 @@ def build_dataframe(reports):
     return df
 
 
-def query(q, id=None, tries=calltries):
+def query_cached(q):
+    qmod = q
+    res_cache = None
+    rf = query_hash(q)
+    if os.path.exists(rf):
+        res_cache = pd.read_hdf(rf, mode='r')
+        if res_cache is not None and 'date is after' not in q:
+            cutdate = (res_cache.iloc[-1].name + pd.DateOffset(-5)).strftime('%m/%d/%Y')
+            qmod += ' when date is after {}'.format(cutdate)
+
+    res = query(qmod)
+    hdf = pd.HDFStore(rf)
+    if res_cache is None:
+        hdf.put('d', res, format='table', data_columns=True)
+        hdf.close()
+    else:
+        res = pd.concat([res_cache, res], sort=True).drop_duplicates()
+        hdf.put('d', res, format='table', data_columns=True)
+        hdf.close()
+
+    return res
+
+
+def query(q, id=None, tries=calltries, cache_inc=False):
+    if cache_inc:
+        return query_cached(q)
+
     r = '<DataRequest><Query><Text>{}</Text></Query></DataRequest>'.format(q)
 
     if tries == 0:
