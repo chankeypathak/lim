@@ -46,6 +46,9 @@ def query_hash(query):
 def build_dataframe(reports):
     columns = [x.text for x in reports.iter(tag='ColumnHeadings')]
     dates = [x.text for x in reports.iter(tag='RowDates')]
+    if len(columns) == 0 or len(dates) == 0:
+        return # no data, return`1
+
     values = [float(x.text) for x in reports.iter(tag='Values')]
     values = list(alternate_col_val(values, len(columns)))
 
