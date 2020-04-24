@@ -35,6 +35,10 @@ class TestLim(unittest.TestCase):
         self.assertEqual(res['GO']['2020-01-02'], 608.5)
         self.assertEqual(res['Brent']['2020-01-02'], 65.56)
 
+    def test_series2(self):
+        res = lim.series('PA0002779.6.2')
+        self.assertEqual(res['PA0002779.6.2']['2020-01-02'], 479.75)
+
     def test_curve(self):
         res = lim.curve({'FP': 'GO', 'FB': 'Brent'})
         self.assertIn('GO', res.columns)
@@ -114,6 +118,12 @@ class TestLim(unittest.TestCase):
 
         if os.path.exists(test_out_loc):
             os.remove(test_out_loc)
+
+    def test_pra_symbol(self):
+        self.assertFalse(lim.check_pra_symbol('FB'))
+        self.assertTrue(lim.check_pra_symbol('AAGXJ00'))
+        self.assertTrue(lim.check_pra_symbol('PGACR00'))
+        self.assertTrue(lim.check_pra_symbol('PA0005643.6.0'))
 
 
 if __name__ == '__main__':

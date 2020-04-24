@@ -114,10 +114,33 @@ def query(q, id=None, tries=calltries, cache_inc=False):
         raise Exception(resp.text)
 
 
+def check_pra_symbol(symbol):
+    """
+    Check if this is a Platts or Argus Symbol
+    :param symbol:
+    :return:
+    """
+    # Platts
+    if len(symbol) == 7 and symbol[:2] in [
+        'PA', 'AA', 'PU', 'F1', 'PH', 'PJ', 'PG', 'PO', 'PP', ]:
+        return True
+
+    # Argus
+    if '.' in symbol:
+        sm = symbol.split('.')[0]
+        if len(sm) == 9 and sm.startswith('PA'):
+            return True
+
+    return False
+
+
 def build_series_query(symbols):
     q = 'Show \n'
     for symbol in symbols:
-        q += '{}: {}\n'.format(symbol, symbol)
+        if check_pra_symbol(symbol):
+            q += '%s: (High of %s + Low of %s)/2 \n' % (symbol, symbol, symbol)
+        else:
+            q += '{}: {}\n'.format(symbol, symbol)
     return q
 
 
@@ -201,10 +224,11 @@ def curve(symbols, column='Close', curve_dates=None):
         res = res.rename(columns=symbols)
 
     # only keep the current forward curve, discard history
-    res = res['{}-{}'.format(pd.datetime.now().year, pd.datetime.now().month):]
-    # reindex dates to start of month
-    res = res.resample('MS').mean()
-    return res
+    if res is not None and len(res) > 0:
+        res = res['{}-{}'.format(pd.datetime.now().year, pd.datetime.now().month):]
+        # reindex dates to start of month
+        res = res.resample('MS').mean()
+        return res
 
 
 def build_continuous_futures_rollover_query(symbol, months=['M1'], rollover_date='5 days before expiration day', after_date=prevyear):
