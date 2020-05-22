@@ -122,7 +122,7 @@ def check_pra_symbol(symbol):
     """
     # Platts
     if len(symbol) == 7 and symbol[:2] in [
-        'PA', 'AA', 'PU', 'F1', 'PH', 'PJ', 'PG', 'PO', 'PP', ]:
+        'PC', 'PA', 'AA', 'PU', 'F1', 'PH', 'PJ', 'PG', 'PO', 'PP', ]:
         return True
 
     # Argus
